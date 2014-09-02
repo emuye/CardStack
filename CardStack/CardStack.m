@@ -16,6 +16,7 @@ typedef enum
     FOURTH_CARD,
     HIDDEN_FIFTH_CARD,
     OFF_SCREEN,
+    OFF_SCREEN_HIDDEN,
     BEHIND_STACK
 } CardStackState;
 
@@ -25,7 +26,9 @@ static int CARD_CONTENT_TAG = 1;
 - (void)_sendToBack:(UIView *)card;
 - (void)_addPropertiesToCard:(UIView *)card forState:(CardStackState)cardState animate:(BOOL)animate;
 - (void)_panOccurred:(UIPanGestureRecognizer *)gestureRecognizer;
-- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay;
+- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay removeCurrent:(BOOL)removeCurrent;
+- (void)_nextDetermineRemoval;
+- (void)_nextRemovingCurrent:(BOOL)removeCurrent;
 @end
 
 @interface CardStack () <UIGestureRecognizerDelegate>
@@ -86,6 +89,8 @@ static int CARD_CONTENT_TAG = 1;
         UIView *content = [self.datasource cardStack:self itemAtIndex:i];
         content.tag = CARD_CONTENT_TAG;
         [card addSubview:content];
+        
+        card.backgroundColor = [UIColor whiteColor];
     }
 
     if (self.itemCount > 4) {
@@ -101,6 +106,8 @@ static int CARD_CONTENT_TAG = 1;
         [self.cards addObject:card];
         
         [self _addPropertiesToCard:card forState:HIDDEN_FIFTH_CARD animate:NO];
+        
+        card.backgroundColor = [UIColor whiteColor];
     }
 
     self.currentTopCardIndex = 0;
@@ -109,46 +116,7 @@ static int CARD_CONTENT_TAG = 1;
 
 - (void)next
 {
-    if (self.itemCount <= VISIBLE_CARD_COUNT) {
-        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
-            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
-                [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
-            }];
-            
-            for (int i = 1; i < self.cards.count; i++) {
-                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
-                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
-                }];
-            }
-            
-            [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
-                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
-            }];
-
-        } completion:^(BOOL finished) {
-            [self _completeOffscreenAnimationWithDuration:0 delay:0];
-        }];
-    } else {
-        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
-            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
-                [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
-            }];
-            
-            [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
-                CardStackState state = self.itemCount > VISIBLE_CARD_COUNT ? BEHIND_STACK : FOURTH_CARD;
-                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, state) animate:NO];
-            }];
-
-            for (int i = 1; i < self.cards.count; i++) {
-                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
-                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
-                }];
-            }
-        } completion:^(BOOL finished) {
-            [self _completeOffscreenAnimationWithDuration:0 delay:0];
-            [self _addPropertiesToCard:self.cards[4] forState:HIDDEN_FIFTH_CARD animate:NO];
-        }];
-    }
+    [self _nextRemovingCurrent:NO];
 }
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
@@ -167,6 +135,11 @@ static int CARD_CONTENT_TAG = 1;
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
     return YES;
+}
+
+- (void)deleteCurrentItem
+{
+    [self _nextRemovingCurrent:YES];
 }
 
 @end
@@ -189,9 +162,9 @@ static int CARD_CONTENT_TAG = 1;
             card.layer.zPosition = 4;
             card.userInteractionEnabled = YES;
             card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
-            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.3].CGColor;
+            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.25].CGColor;
             card.layer.shadowRadius = 2;
-            card.layer.shadowOffset = CGSizeMake(2, 2);
+            card.layer.shadowOffset = CGSizeMake(0, 0);
             card.layer.shadowOpacity = 1;
             break;
         case SECOND_CARD:
@@ -201,9 +174,9 @@ static int CARD_CONTENT_TAG = 1;
             card.alpha = 1;
             card.userInteractionEnabled = NO;
             card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
-            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.37].CGColor;
+            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.32].CGColor;
             card.layer.shadowRadius = 2;
-            card.layer.shadowOffset = CGSizeMake(2, 2);
+            card.layer.shadowOffset = CGSizeMake(0, 0);
             card.layer.shadowOpacity = 1;
             break;
         case THIRD_CARD:
@@ -213,9 +186,9 @@ static int CARD_CONTENT_TAG = 1;
             card.alpha = 1;
             card.userInteractionEnabled = NO;
             card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
-            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.42].CGColor;
+            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.37].CGColor;
             card.layer.shadowRadius = 2;
-            card.layer.shadowOffset = CGSizeMake(2, 2);
+            card.layer.shadowOffset = CGSizeMake(0, 0);
             card.layer.shadowOpacity = 1;
             break;
         case FOURTH_CARD:
@@ -225,9 +198,9 @@ static int CARD_CONTENT_TAG = 1;
             card.layer.zPosition = 1;
             card.userInteractionEnabled = NO;
             card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
-            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.5].CGColor;
+            card.layer.shadowColor = [UIColor colorWithWhite:0 alpha:0.45].CGColor;
             card.layer.shadowRadius = 2;
-            card.layer.shadowOffset = CGSizeMake(2, 2);
+            card.layer.shadowOffset = CGSizeMake(0, 0);
             card.layer.shadowOpacity = 1;
             break;
         case HIDDEN_FIFTH_CARD:
@@ -240,6 +213,13 @@ static int CARD_CONTENT_TAG = 1;
         case OFF_SCREEN:
             card.transform = CGAffineTransformIdentity;
             card.center = CGPointMake(-CARD_WIDTH/2, self.center.y + 50);
+            card.alpha = 0.6;
+            card.layer.zPosition = 0;
+            card.userInteractionEnabled = NO;
+            break;
+        case OFF_SCREEN_HIDDEN:
+            card.transform = CGAffineTransformIdentity;
+            card.center = CGPointMake(-CARD_WIDTH/2, self.center.y);
             card.alpha = 0.6;
             card.layer.zPosition = 0;
             card.userInteractionEnabled = NO;
@@ -297,8 +277,7 @@ static int CARD_CONTENT_TAG = 1;
                     card.layer.transform = CATransform3DMakeRotation(-newZRot *  M_PI / 180, 0, 0, 1);
                     card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
                 }];
-                
-                NSLog(@"delta:%f, zRot;%f", delta, newZRot);
+//                NSLog(@"delta:%f, zRot;%f", delta, newZRot);
             }
             
             [gestureRecognizer setTranslation:CGPointZero inView:self];
@@ -319,10 +298,10 @@ static int CARD_CONTENT_TAG = 1;
 
             if (newPos.x <= -CARD_WIDTH/4) // distance threshold
             {
-                [self next];
+                [self _nextDetermineRemoval];
             }
             else if (-velocity.x >= velocityThreshold ) { // velocity threshold
-                [self next];
+                [self _nextDetermineRemoval];
             }
             else // Snap back to the beginning position
             {
@@ -340,27 +319,137 @@ static int CARD_CONTENT_TAG = 1;
     }
 }
 
-- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay
+- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay removeCurrent:(BOOL)removeCurrent
 {
     UIView *oldTop = self.cards[0];
     
+    // Reasign cards to the new values
     for (int i = 0; i < self.cards.count - 1; i++) {
         self.cards[i] = self.cards[i + 1];
     }
+    
     self.cards[self.cards.count - 1] = oldTop;
-    
-    self.currentTopCardIndex++;
-    self.nextCardIndex++;
-    
-    if (self.itemCount >= VISIBLE_CARD_COUNT) {
-        if (self.nextCardIndex >= self.itemCount) {
-            self.nextCardIndex = 0;
+
+    if (!removeCurrent || self.currentTopCardIndex > self.nextCardIndex) {
+        if (!removeCurrent) {
+            self.currentTopCardIndex++;
         }
         
+        self.nextCardIndex++;
+    }
+    
+    if (self.currentTopCardIndex >= self.itemCount) {
+        self.currentTopCardIndex = 0;
+    }
+
+    if (self.nextCardIndex >= self.itemCount) {
+        self.nextCardIndex = 0;
+    }
+
+    if (self.itemCount >= VISIBLE_CARD_COUNT) {
         UIView *nextContent = [self.datasource cardStack:self itemAtIndex:self.nextCardIndex];
         nextContent.tag = CARD_CONTENT_TAG;
         [[self.cards[3] viewWithTag:CARD_CONTENT_TAG] removeFromSuperview];
         [self.cards[3] addSubview:nextContent];
+        
+        if (self.cards.count > 4) {
+            [[self.cards[4] viewWithTag:CARD_CONTENT_TAG] removeFromSuperview];
+        }
+    }
+}
+
+- (void)_nextDetermineRemoval
+{
+    BOOL removeItem = NO;
+    
+    if ([self.datasource respondsToSelector:@selector(cardStack:itemAtIndexWillDisappear:)]) {
+        removeItem = [self.datasource cardStack:self itemAtIndexWillDisappear:self.currentTopCardIndex];
+    }
+    
+    [self _nextRemovingCurrent:removeItem];
+}
+
+- (void)_nextRemovingCurrent:(BOOL)removeCurrent
+{
+    if (removeCurrent) {
+        self.itemCount--;
+    }
+    
+    CardStackState offScreenState = removeCurrent ? OFF_SCREEN_HIDDEN : OFF_SCREEN;
+
+    if (self.itemCount <= VISIBLE_CARD_COUNT) {
+        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
+            self.userInteractionEnabled = NO;
+            
+            // Move top offscreen
+            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
+                [self _addPropertiesToCard:self.cards[0] forState:offScreenState animate:YES];
+            }];
+            
+            // Shift the others forward
+            for (int i = 1; i < self.cards.count; i++) {
+                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
+                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
+                }];
+            }
+            
+            if (!removeCurrent) {
+                // Move top to the back
+                [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
+                    [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
+                }];
+            }
+            
+        } completion:^(BOOL finished) {
+            [self _completeOffscreenAnimationWithDuration:0 delay:0 removeCurrent:removeCurrent];
+            
+            // If we removed a card we may now have an extra. Get rid of it if that's the case.
+            if (removeCurrent && self.itemCount <= VISIBLE_CARD_COUNT) {
+                UIView *lastCard = self.cards.lastObject;
+                [lastCard removeFromSuperview];
+                [self.cards removeObject:lastCard];
+            }
+
+            self.userInteractionEnabled = YES;
+        }];
+    } else {
+        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
+            self.userInteractionEnabled = NO;
+            
+            // Move top offscreen
+            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
+                [self _addPropertiesToCard:self.cards[0] forState:offScreenState animate:YES];
+            }];
+            
+            if (!removeCurrent){
+                // Move the top to behind the stack
+                [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
+                    [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, BEHIND_STACK) animate:NO];
+                }];
+            }
+            
+            // Shift the cards forward
+            for (int i = 1; i < self.cards.count; i++) {
+                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
+                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
+                }];
+            }
+        } completion:^(BOOL finished) {
+            [self _completeOffscreenAnimationWithDuration:0 delay:0 removeCurrent:removeCurrent];
+            
+            // Will always be true unless we removed.
+            if (self.itemCount > VISIBLE_CARD_COUNT) {
+                // Reset this card so it can come in from the hidden 5th position
+                [self _addPropertiesToCard:self.cards[4] forState:HIDDEN_FIFTH_CARD animate:NO];
+            } else {
+                // We removed the item and have too many cards now so get rid of this one.
+                UIView *lastCard = self.cards.lastObject;
+                [lastCard removeFromSuperview];
+                [self.cards removeObject:lastCard];
+            }
+            
+            self.userInteractionEnabled = YES;
+        }];
     }
 }
 

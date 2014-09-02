@@ -19,12 +19,16 @@ static int CARD_HEIGHT = 320;
 
 - (void)reloadData;
 - (void)next;
+- (void)deleteCurrentItem;
 
 @end
 
-
 @protocol CardStackDataSource <NSObject>
-
 - (int)numberOfItemsInCardStack:(CardStack*)cardStack;
 - (UIView*)cardStack:(CardStack*)cardStack itemAtIndex:(int)index;
+
+@optional
+
+// Return YES to have the item removed after disappearing
+- (BOOL)cardStack:(CardStack*)cardStack itemAtIndexWillDisappear:(int)index;
 @end
