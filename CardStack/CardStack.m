@@ -14,6 +14,7 @@ typedef enum
     SECOND_CARD,
     THIRD_CARD,
     FOURTH_CARD,
+    HIDDEN_FIFTH_CARD,
     OFF_SCREEN,
     BEHIND_STACK
 } CardStackState;
@@ -99,7 +100,7 @@ static int CARD_CONTENT_TAG = 1;
         [self addSubview:card];
         [self.cards addObject:card];
         
-        [self _addPropertiesToCard:card forState:BEHIND_STACK animate:NO];
+        [self _addPropertiesToCard:card forState:HIDDEN_FIFTH_CARD animate:NO];
     }
 
     self.currentTopCardIndex = 0;
@@ -139,6 +140,7 @@ static int CARD_CONTENT_TAG = 1;
                 }
             } completion:^(BOOL finished) {
                 [self _completeOffscreenAnimationWithDuration:0 delay:0];
+                [self _addPropertiesToCard:self.cards[4] forState:HIDDEN_FIFTH_CARD animate:NO];
             }];
         }];
     }
@@ -223,6 +225,13 @@ static int CARD_CONTENT_TAG = 1;
             card.layer.shadowOffset = CGSizeMake(2, 2);
             card.layer.shadowOpacity = 1;
             break;
+        case HIDDEN_FIFTH_CARD:
+            card.center = CGPointMake(self.center.x, self.center.y + 65);
+            card.transform = CGAffineTransformMakeScale(0.742857143, 0.742857143);
+            card.alpha = 0.0;
+            card.layer.zPosition = 0;
+            card.userInteractionEnabled = NO;
+            break;
         case OFF_SCREEN:
             card.transform = CGAffineTransformIdentity;
             card.center = CGPointMake(-CARD_WIDTH/2, self.center.y + 50);
@@ -230,9 +239,8 @@ static int CARD_CONTENT_TAG = 1;
             card.layer.zPosition = 0;
             card.userInteractionEnabled = NO;
             break;
-            
         case BEHIND_STACK:
-            card.center = CGPointMake(self.center.x, self.center.y + 70);
+            card.center = CGPointMake(self.center.x, self.center.y + 87);
             card.transform = CGAffineTransformMakeScale(0.5, 0.5);
             card.alpha = 0;
             card.layer.zPosition = 0;
@@ -277,13 +285,15 @@ static int CARD_CONTENT_TAG = 1;
 //                ((Input - InputLow) / (InputHigh - InputLow)) * (OutputHigh - OutputLow) + OutputLow;
                 
                 float newAlpha = (delta - 0) / (1 - 0) * (1 - 0.8) + 0.8;
-                float newZRot = (delta - 0) / (1 - 0) * (5 + 5) - 5;
+                float newZRot = (delta - 0) / (1 - 0) * (5 - 0) + 0;
                 [UIView animateWithDuration:0.1 animations:^{
                     card.center = newPos;
                     card.alpha = newAlpha;
                     card.layer.transform = CATransform3DMakeRotation(-newZRot *  M_PI / 180, 0, 0, 1);
                     card.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:card.bounds cornerRadius:10].CGPath;
                 }];
+                
+                NSLog(@"delta:%f, zRot;%f", delta, newZRot);
             }
             
             [gestureRecognizer setTranslation:CGPointZero inView:self];
