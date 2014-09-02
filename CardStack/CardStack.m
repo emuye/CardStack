@@ -110,38 +110,43 @@ static int CARD_CONTENT_TAG = 1;
 - (void)next
 {
     if (self.itemCount <= VISIBLE_CARD_COUNT) {
-        [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
-            [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
-        } completion:^(BOOL finished) {
-            [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
-                for (int i = 1; i < self.cards.count; i++) {
-                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
-                }
-                
-                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
-            } completion:^(BOOL finished) {
-                [self _completeOffscreenAnimationWithDuration:0 delay:0];
-            }];
-        }];
-    } else {
-        [UIView animateKeyframesWithDuration:0.5 delay:0 options:0 animations:^{
-            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.35 animations:^{
+        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
+            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
                 [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
             }];
             
-            [UIView addKeyframeWithRelativeStartTime:0.35 relativeDuration:0.65 animations:^{
+            for (int i = 1; i < self.cards.count; i++) {
+                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
+                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
+                }];
+            }
+            
+            [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
+                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
+            }];
+
+        } completion:^(BOOL finished) {
+            [self _completeOffscreenAnimationWithDuration:0 delay:0];
+        }];
+    } else {
+        [UIView animateKeyframesWithDuration:0.6 delay:0 options:0 animations:^{
+            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.4 animations:^{
+                [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
+            }];
+            
+            [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.4 animations:^{
                 CardStackState state = self.itemCount > VISIBLE_CARD_COUNT ? BEHIND_STACK : FOURTH_CARD;
                 [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, state) animate:NO];
             }];
-        } completion:^(BOOL finished) {
-            [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
-                for (int i = 1; i < self.cards.count; i++) {
+
+            for (int i = 1; i < self.cards.count; i++) {
+                [UIView addKeyframeWithRelativeStartTime:i * 0.1 relativeDuration:0.2 + i *.1 animations:^{
                     [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
-                }
-            } completion:^(BOOL finished) {
-                [self _completeOffscreenAnimationWithDuration:0 delay:0];
-                [self _addPropertiesToCard:self.cards[4] forState:HIDDEN_FIFTH_CARD animate:NO];
-            }];
+                }];
+            }
+        } completion:^(BOOL finished) {
+            [self _completeOffscreenAnimationWithDuration:0 delay:0];
+            [self _addPropertiesToCard:self.cards[4] forState:HIDDEN_FIFTH_CARD animate:NO];
         }];
     }
 }
