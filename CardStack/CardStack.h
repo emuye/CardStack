@@ -27,5 +27,4 @@ static int CARD_HEIGHT = 320;
 
 - (int)numberOfItemsInCardStack:(CardStack*)cardStack;
 - (UIView*)cardStack:(CardStack*)cardStack itemAtIndex:(int)index;
-
 @end

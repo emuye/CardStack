@@ -45,8 +45,6 @@ static int CARD_COUNT = 10;
     self.cardStack = [[CardStack alloc] initWithFrame:self.view.bounds];
     self.cardStack.datasource = self;
     [self.view addSubview:self.cardStack];
-
-//    [self performSelector:@selector(next) withObject:nil afterDelay:2];
 }
 
 - (int)numberOfItemsInCardStack:(CardStack*)cardStack

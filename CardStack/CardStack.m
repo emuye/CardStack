@@ -14,15 +14,17 @@ typedef enum
     SECOND_CARD,
     THIRD_CARD,
     FOURTH_CARD,
-    OFF_SCREEN
-} CARD_STATE;
+    OFF_SCREEN,
+    BEHIND_STACK
+} CardStackState;
 
 static int CARD_CONTENT_TAG = 1;
 
 @interface CardStack (Private)
 - (void)_sendToBack:(UIView *)card;
-- (void)_addPropertiesToCard:(UIView *)card forState:(CARD_STATE)cardState animate:(BOOL)animate;
+- (void)_addPropertiesToCard:(UIView *)card forState:(CardStackState)cardState animate:(BOOL)animate;
 - (void)_panOccurred:(UIPanGestureRecognizer *)gestureRecognizer;
+- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay;
 @end
 
 @interface CardStack () <UIGestureRecognizerDelegate>
@@ -85,44 +87,61 @@ static int CARD_CONTENT_TAG = 1;
         [card addSubview:content];
     }
 
+    if (self.itemCount > 4) {
+        // Add one temporary card to use for animations.
+        UIView *card = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CARD_WIDTH, CARD_HEIGHT)];
+        card.layer.cornerRadius = 10;
+        
+        UIPanGestureRecognizer *panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_panOccurred:)];
+        panGestureRecognizer.delegate = self;
+        card.gestureRecognizers = @[panGestureRecognizer];
+        
+        [self addSubview:card];
+        [self.cards addObject:card];
+        
+        [self _addPropertiesToCard:card forState:BEHIND_STACK animate:NO];
+    }
+
     self.currentTopCardIndex = 0;
     self.nextCardIndex = VISIBLE_CARD_COUNT - 1;
 }
 
 - (void)next
 {
-    [UIView animateWithDuration:0.3 animations:^{
-        [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
-    }completion:^(BOOL finished) {
-        [UIView animateWithDuration:0.3 animations:^{
-            for (int i = 1; i < self.cards.count; i++) {
-                [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
-            }
-            
-            [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
-        }completion:^(BOOL finished) {
-            UIView *oldTop = self.cards[0];
-            
-            for (int i = 0; i < self.cards.count - 1; i++) {
-                self.cards[i] = self.cards[i + 1];
-            }
-            self.cards[self.cards.count - 1] = oldTop;
-            
-            self.currentTopCardIndex++;
-            self.nextCardIndex++;
-
-            if (self.itemCount >= VISIBLE_CARD_COUNT) {
-                if (self.nextCardIndex >= self.itemCount) {
-                    self.nextCardIndex = 0;
+    if (self.itemCount <= VISIBLE_CARD_COUNT) {
+        [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
+            [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
+                for (int i = 1; i < self.cards.count; i++) {
+                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
                 }
                 
-                UIView *nextContent = [self.datasource cardStack:self itemAtIndex:self.nextCardIndex];
-                nextContent.tag = CARD_CONTENT_TAG;
-                [[self.cards[3] viewWithTag:CARD_CONTENT_TAG] removeFromSuperview];
-                [self.cards[3] addSubview:nextContent];
-            }
+                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, FOURTH_CARD) animate:NO];
+            } completion:^(BOOL finished) {
+                [self _completeOffscreenAnimationWithDuration:0 delay:0];
+            }];
         }];
-    }];
+    } else {
+        [UIView animateKeyframesWithDuration:0.5 delay:0 options:0 animations:^{
+            [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.35 animations:^{
+                [self _addPropertiesToCard:self.cards[0] forState:OFF_SCREEN animate:YES];
+            }];
+            
+            [UIView addKeyframeWithRelativeStartTime:0.35 relativeDuration:0.65 animations:^{
+                CardStackState state = self.itemCount > VISIBLE_CARD_COUNT ? BEHIND_STACK : FOURTH_CARD;
+                [self _addPropertiesToCard:self.cards[0] forState:MIN(self.itemCount - 1, state) animate:NO];
+            }];
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:0.3 delay:0 options:0 animations:^{
+                for (int i = 1; i < self.cards.count; i++) {
+                    [self _addPropertiesToCard:self.cards[i] forState:i-1 animate:NO];
+                }
+            } completion:^(BOOL finished) {
+                [self _completeOffscreenAnimationWithDuration:0 delay:0];
+            }];
+        }];
+    }
 }
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
@@ -153,7 +172,7 @@ static int CARD_CONTENT_TAG = 1;
     card.alpha = 0.5;
 }
 
-- (void)_addPropertiesToCard:(UIView *)card forState:(CARD_STATE)cardState animate:(BOOL)animate
+- (void)_addPropertiesToCard:(UIView *)card forState:(CardStackState)cardState animate:(BOOL)animate
 {
     switch (cardState) {
         case TOP_CARD:
@@ -206,8 +225,16 @@ static int CARD_CONTENT_TAG = 1;
             break;
         case OFF_SCREEN:
             card.transform = CGAffineTransformIdentity;
-            card.center = CGPointMake(-320, self.center.y + 50);
-            card.alpha = 0.5;
+            card.center = CGPointMake(-CARD_WIDTH/2, self.center.y + 50);
+            card.alpha = 0.6;
+            card.layer.zPosition = 0;
+            card.userInteractionEnabled = NO;
+            break;
+            
+        case BEHIND_STACK:
+            card.center = CGPointMake(self.center.x, self.center.y + 70);
+            card.transform = CGAffineTransformMakeScale(0.5, 0.5);
+            card.alpha = 0;
             card.layer.zPosition = 0;
             card.userInteractionEnabled = NO;
             break;
@@ -295,6 +322,30 @@ static int CARD_CONTENT_TAG = 1;
             
         default:
             break;
+    }
+}
+
+- (void)_completeOffscreenAnimationWithDuration:(NSTimeInterval)duration delay:(NSTimeInterval)delay
+{
+    UIView *oldTop = self.cards[0];
+    
+    for (int i = 0; i < self.cards.count - 1; i++) {
+        self.cards[i] = self.cards[i + 1];
+    }
+    self.cards[self.cards.count - 1] = oldTop;
+    
+    self.currentTopCardIndex++;
+    self.nextCardIndex++;
+    
+    if (self.itemCount >= VISIBLE_CARD_COUNT) {
+        if (self.nextCardIndex >= self.itemCount) {
+            self.nextCardIndex = 0;
+        }
+        
+        UIView *nextContent = [self.datasource cardStack:self itemAtIndex:self.nextCardIndex];
+        nextContent.tag = CARD_CONTENT_TAG;
+        [[self.cards[3] viewWithTag:CARD_CONTENT_TAG] removeFromSuperview];
+        [self.cards[3] addSubview:nextContent];
     }
 }
 
