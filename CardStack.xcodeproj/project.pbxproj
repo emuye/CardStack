@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9901313419B4DCBC00B03A80 /* CardStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 9901313319B4DCBC00B03A80 /* CardStack.m */; };
+		9901313919B5456500B03A80 /* CardStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 9901313819B5456500B03A80 /* CardStack.m */; };
 		9929EAD519B149BC00C99DA9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9929EAD419B149BC00C99DA9 /* Foundation.framework */; };
 		9929EAD719B149BC00C99DA9 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9929EAD619B149BC00C99DA9 /* CoreGraphics.framework */; };
 		9929EAD919B149BC00C99DA9 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9929EAD819B149BC00C99DA9 /* UIKit.framework */; };
@@ -34,8 +34,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		9901313219B4DCBC00B03A80 /* CardStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CardStack.h; sourceTree = SOURCE_ROOT; };
-		9901313319B4DCBC00B03A80 /* CardStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CardStack.m; sourceTree = SOURCE_ROOT; };
+		9901313719B5456500B03A80 /* CardStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CardStack.h; sourceTree = "<group>"; };
+		9901313819B5456500B03A80 /* CardStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CardStack.m; sourceTree = "<group>"; };
 		9929EAD119B149BC00C99DA9 /* CardStack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardStack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9929EAD419B149BC00C99DA9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9929EAD619B149BC00C99DA9 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -115,8 +115,8 @@
 			children = (
 				9929EAE319B149BC00C99DA9 /* AppDelegate.h */,
 				9929EAE419B149BC00C99DA9 /* AppDelegate.m */,
-				9901313219B4DCBC00B03A80 /* CardStack.h */,
-				9901313319B4DCBC00B03A80 /* CardStack.m */,
+				9901313719B5456500B03A80 /* CardStack.h */,
+				9901313819B5456500B03A80 /* CardStack.m */,
 				9929EAEC19B149BC00C99DA9 /* ViewController.h */,
 				9929EAED19B149BC00C99DA9 /* ViewController.m */,
 				9929EAEF19B149BC00C99DA9 /* Images.xcassets */,
@@ -252,7 +252,7 @@
 			files = (
 				9929EAEE19B149BC00C99DA9 /* ViewController.m in Sources */,
 				9929EAE519B149BC00C99DA9 /* AppDelegate.m in Sources */,
-				9901313419B4DCBC00B03A80 /* CardStack.m in Sources */,
+				9901313919B5456500B03A80 /* CardStack.m in Sources */,
 				9929EAE119B149BC00C99DA9 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
